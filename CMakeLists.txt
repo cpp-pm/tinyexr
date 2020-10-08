@@ -5,31 +5,45 @@ cmake_minimum_required(VERSION 3.5)
 set(BUILD_TARGET "tinyexr")
 set(SAMPLE_TARGET "test_tinyexr")
 
-project(${BUILD_TARGET} CXX)
+project(${BUILD_TARGET} LANGUAGES CXX VERSION 1.0.0)
+
+# Introduce variables:
+# * CMAKE_INSTALL_LIBDIR
+# * CMAKE_INSTALL_BINDIR
+# * CMAKE_INSTALL_INCLUDEDIR
+include(GNUInstallDirs)
 
 # options
-option(TINYEXR_BUILD_SAMPLE "Build a sample" ON)
+option(TINYEXR_BUILD_SAMPLE "Build a sample" OFF)
+option(BUILD_SHARED_LIBS "Build shared libs" OFF)
 
 # cmake modules
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/sanitizers)
-find_package(Sanitizers) # Address sanitizer (-DSANITIZE_ADDRESS=ON)
+#list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+#list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/sanitizers)
+#find_package(Sanitizers) # Address sanitizer (-DSANITIZE_ADDRESS=ON)
 
 # Require strict C++11 mode(e.g. `-std=c++11`)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+#set(CMAKE_CXX_STANDARD 11)
+#set(CMAKE_CXX_STANDARD_REQUIRED ON)
+#set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(TINYEXR_HEADERS
+    ${PROJECT_SOURCE_DIR}/tinyexr.h
+    )
 
 set(TINYEXR_SOURCES
     ${PROJECT_SOURCE_DIR}/tinyexr.cc
     )
 
-add_library(${BUILD_TARGET} ${TINYEXR_SOURCES} ${TINYEXR_DEP_SOURCES})
-add_sanitizers(${BUILD_TARGET})
+add_library(${BUILD_TARGET} ${TINYEXR_SOURCES})
+#add_sanitizers(${BUILD_TARGET})
 
-target_include_directories(${BUILD_TARGET} PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries(${BUILD_TARGET} ${TINYEXR_EXT_LIBRARIES} ${CMAKE_DL_LIBS})
-
+target_include_directories(${BUILD_TARGET} PUBLIC
+    "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
+    "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>")
+if(UNIX)
+  target_link_libraries(${BUILD_TARGET} PUBLIC ${CMAKE_DL_LIBS})
+endif()
 # Increase warning level for clang.
 IF (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set_source_files_properties(${TINYEXR_SOURCES} PROPERTIES COMPILE_FLAGS "-Weverything -Werror -Wno-padded -Wno-c++98-compat-pedantic -Wno-documentation -Wno-unused-member-function")
@@ -42,7 +56,7 @@ if (TINYEXR_BUILD_SAMPLE)
       )
 
   add_executable(${SAMPLE_TARGET} ${TINYEXR_SAMPLE_SOURCES})
-  add_sanitizers(${SAMPLE_TARGET})
+  #add_sanitizers(${SAMPLE_TARGET})
   if (WIN32)
     target_compile_definitions(${SAMPLE_TARGET} PUBLIC UNICODE)
     target_compile_definitions(${SAMPLE_TARGET} PUBLIC _UNICODE)
@@ -60,3 +74,48 @@ if (TINYEXR_BUILD_SAMPLE)
   endif(WIN32)
 
 endif (TINYEXR_BUILD_SAMPLE)
+
+set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(VERSION_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
+set(PROJECT_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}Config.cmake")
+
+set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(NAMESPACE "${PROJECT_NAME}::")
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+    "${VERSION_CONFIG}" COMPATIBILITY ExactVersion
+)
+
+configure_package_config_file(
+    "cmake/Config.cmake.in"
+    "${PROJECT_CONFIG}"
+    INSTALL_DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+install(
+    TARGETS tinyexr
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+)
+
+install(
+    FILES ${TINYEXR_HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
+
+install(
+    FILES "${PROJECT_CONFIG}" "${VERSION_CONFIG}"
+    DESTINATION "${CONFIG_INSTALL_DIR}"
+)
+
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${NAMESPACE}"
+    DESTINATION "${CONFIG_INSTALL_DIR}"
+)
