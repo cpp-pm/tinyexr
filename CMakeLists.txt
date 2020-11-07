@@ -42,6 +42,7 @@ set(TINYEXR_SOURCES
     )
 
 add_library(${BUILD_TARGET} ${TINYEXR_SOURCES})
+target_compile_definitions(${BUILD_TARGET} PUBLIC TINYEXR_USE_MINIZ=0 TINYEXR_USE_PIZ=0)
 
 hunter_add_package(ZLIB)
 find_package(ZLIB CONFIG REQUIRED)
