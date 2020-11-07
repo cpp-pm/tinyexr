@@ -94,6 +94,10 @@ extern "C" {
 #define TINYEXR_USE_MINIZ (1)
 #endif
 
+#if !TINYEXR_USE_MINIZ
+#include <zlib.h>
+#endif
+
 // Disable PIZ comporession when applying cpplint.
 #ifndef TINYEXR_USE_PIZ
 #define TINYEXR_USE_PIZ (1)

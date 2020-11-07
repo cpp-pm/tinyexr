@@ -2,6 +2,12 @@
 # Not usable for your cmake app.
 cmake_minimum_required(VERSION 3.5)
 
+include(cmake/HunterGate.cmake)
+HunterGate(
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.282.tar.gz"
+    SHA1 "6811dd3e10eea8cd6b479a422a828115af1a35ba"
+)
+
 set(BUILD_TARGET "tinyexr")
 set(SAMPLE_TARGET "test_tinyexr")
 
@@ -36,11 +42,17 @@ set(TINYEXR_SOURCES
     )
 
 add_library(${BUILD_TARGET} ${TINYEXR_SOURCES})
+target_compile_definitions(${BUILD_TARGET} PUBLIC TINYEXR_USE_MINIZ=0 TINYEXR_USE_PIZ=0)
+
+hunter_add_package(ZLIB)
+find_package(ZLIB CONFIG REQUIRED)
+
 #add_sanitizers(${BUILD_TARGET})
 
 target_include_directories(${BUILD_TARGET} PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>")
+target_link_libraries(${BUILD_TARGET} PUBLIC ZLIB::zlib)
 if(UNIX)
   target_link_libraries(${BUILD_TARGET} PUBLIC ${CMAKE_DL_LIBS})
 endif()
