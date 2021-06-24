@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.5)
 
 include(cmake/HunterGate.cmake)
 HunterGate(
-    URL "https://github.com/cpp-pm/hunter/archive/v0.23.282.tar.gz"
-    SHA1 "6811dd3e10eea8cd6b479a422a828115af1a35ba"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.304.tar.gz"
+    SHA1 "cae9026e69d7d8333897663688a11f4232fb8826"
 )
 
 set(BUILD_TARGET "tinyexr")
@@ -52,6 +52,7 @@ target_include_directories(${BUILD_TARGET} PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>"
     "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>")
 target_link_libraries(${BUILD_TARGET} PUBLIC ZLIB::zlib)
+target_compile_definitions(${BUILD_TARGET} PUBLIC TINYEXR_USE_HUNTER)
 if(UNIX)
   target_link_libraries(${BUILD_TARGET} PUBLIC ${CMAKE_DL_LIBS})
 endif()
@@ -89,6 +90,7 @@ endif (TINYEXR_BUILD_SAMPLE)
 set(GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(VERSION_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}ConfigVersion.cmake")
 set(PROJECT_CONFIG "${GENERATED_DIR}/${PROJECT_NAME}Config.cmake")
+set(GENERATED_HEADER "${GENERATED_DIR}/tinyexr.h")
 
 set(CONFIG_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 
@@ -115,8 +117,11 @@ install(
     ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 )
 
+file(READ ${TINYEXR_HEADERS} TINYEXR_HEADER_STRING)
+configure_file(${PROJECT_SOURCE_DIR}/tinyexr.h.in ${GENERATED_HEADER})
+
 install(
-    FILES ${TINYEXR_HEADERS}
+    FILES ${GENERATED_HEADER}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
 
