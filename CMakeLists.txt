@@ -11,7 +11,7 @@ HunterGate(
 set(BUILD_TARGET "tinyexr")
 set(SAMPLE_TARGET "test_tinyexr")
 
-project(${BUILD_TARGET} LANGUAGES CXX VERSION 1.0.0)
+project(${BUILD_TARGET} VERSION 1.0.0)
 
 # Introduce variables:
 # * CMAKE_INSTALL_LIBDIR
